@@ -1,0 +1,19 @@
+{
+  "name": "redread",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Agrégateur de presse militant à grille d'analyse de classe DK-IR. Outil interne.",
+  "scripts": {
+    "check-feeds": "node ingestion/check_feeds.js ./ingestion/feeds.json",
+    "ingest": "node ingestion/ingest.js",
+    "cluster": "node ingestion/cluster.js",
+    "analyze": "node ingestion/analyze.js",
+    "pipeline": "node ingestion/ingest.js && node ingestion/cluster.js && node ingestion/analyze.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.0",
+    "pg": "^8.22.0",
+    "rss-parser": "^3.13.0"
+  }
+}

@@ -1,0 +1,56 @@
+name: RedRead Pipeline
+
+on:
+  # Toutes les heures
+  schedule:
+    - cron: '0 * * * *'
+  # Permet de lancer manuellement depuis l'onglet Actions sur GitHub
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    name: Ingest → Cluster → Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: redread/package-lock.json
+
+      - name: Installer les dépendances
+        working-directory: redread
+        run: npm ci
+
+      # ── Étape 1 : Aspiration des flux RSS ────────────────────────
+      - name: Étape 1 — Ingestion RSS
+        working-directory: redread
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MOCK_AI: 'true'
+        run: node ingestion/ingest.js
+
+      # ── Étape 2 : Clustering (vectorisation + regroupement en événements) ─
+      - name: Étape 2 — Clustering
+        working-directory: redread
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MOCK_AI: 'true'
+        run: node ingestion/cluster.js
+
+      # ── Étape 3 : Analyse de classe (DK-IR) ─────────────────────
+      - name: Étape 3 — Analyse de classe
+        working-directory: redread
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MOCK_AI: 'true'
+        run: node ingestion/analyze.js

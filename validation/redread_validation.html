@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedRead — Validation</title>
+<style>
+  /* ============ RedRead, esthétique constructiviste ============ */
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --rouge:#FF1A1A;
+    --noir:#050202;
+    --noir-2:#0E0808;
+    --noir-3:#1A1010;
+    --blanc:#FAF0F0;
+    --gris:#8A7C7C;
+    --gris-line:#2A1C1C;
+    --vert:#1FBF75;     /* validé */
+    --jaune:#E0A82E;    /* à revoir */
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--noir);color:var(--blanc);
+    font-family:'Inter',sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ---- barre haute ---- */
+  header{
+    position:sticky;top:0;z-index:10;
+    background:var(--noir);border-bottom:2px solid var(--rouge);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{
+    width:30px;height:30px;position:relative;flex-shrink:0;
+    background:conic-gradient(from 135deg, var(--blanc) 0deg 180deg, var(--noir) 180deg 360deg);
+    border-radius:50%;border:1px solid var(--gris-line);
+  }
+  .logo::after{
+    content:"";position:absolute;top:50%;left:50%;
+    width:0;height:0;transform:translate(-30%,-50%);
+    border-top:6px solid transparent;border-bottom:6px solid transparent;
+    border-left:10px solid var(--rouge);
+  }
+  .brand h1{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;font-weight:400}
+  .brand .sub{font-family:'IBM Plex Mono';font-size:11px;color:var(--gris);letter-spacing:1px}
+  .queue-count{font-family:'IBM Plex Mono';font-size:13px;color:var(--gris)}
+  .queue-count b{color:var(--rouge)}
+
+  /* ---- layout ---- */
+  .wrap{max-width:920px;margin:0 auto;padding:24px}
+  .hint{
+    font-family:'IBM Plex Mono';font-size:12px;color:var(--gris);
+    border-left:2px solid var(--gris-line);padding-left:12px;margin-bottom:20px;
+  }
+
+  /* ---- carte d'analyse à valider ---- */
+  .card{
+    background:var(--noir-2);border:1px solid var(--gris-line);
+    margin-bottom:20px;overflow:hidden;
+  }
+  .card-head{padding:16px 20px;border-bottom:1px solid var(--gris-line)}
+  .src-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .src{font-family:'IBM Plex Mono';font-size:12px;color:var(--gris)}
+  .class-tag{
+    font-family:'IBM Plex Mono';font-size:11px;font-weight:500;
+    padding:2px 8px;border:1px solid;letter-spacing:.5px;text-transform:uppercase;
+  }
+  .c-capital{color:var(--rouge);border-color:var(--rouge)}
+  .c-pb{color:var(--jaune);border-color:var(--jaune)}
+  .c-prolo{color:var(--vert);border-color:var(--vert)}
+  .title{font-size:18px;font-weight:600;line-height:1.35}
+
+  /* ---- champs d'analyse, éditables ---- */
+  .field{padding:14px 20px;border-bottom:1px solid var(--gris-line)}
+  .field:last-of-type{border-bottom:none}
+  .flabel{
+    font-family:'IBM Plex Mono';font-size:11px;color:var(--rouge);
+    text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:block;
+  }
+  .editable{
+    width:100%;background:var(--noir);color:var(--blanc);
+    border:1px solid var(--gris-line);border-radius:0;
+    font-family:'Inter';font-size:14px;line-height:1.55;
+    padding:10px 12px;resize:vertical;min-height:44px;
+  }
+  .editable:focus{outline:none;border-color:var(--rouge)}
+  .nd-group{display:grid;gap:10px}
+  .nd-sub{font-family:'IBM Plex Mono';font-size:10px;color:var(--gris);margin-bottom:4px;text-transform:uppercase}
+
+  /* ---- factualité, sélecteur ---- */
+  .fact-row{display:flex;gap:8px;flex-wrap:wrap}
+  .fact-opt{
+    font-family:'IBM Plex Mono';font-size:12px;padding:6px 12px;
+    border:1px solid var(--gris-line);color:var(--gris);cursor:pointer;
+    user-select:none;transition:.15s;
+  }
+  .fact-opt.on{border-color:var(--blanc);color:var(--blanc)}
+  .fact-opt.on[data-f="fausse"]{border-color:var(--rouge);color:var(--rouge)}
+  .fact-opt.on[data-f="haute"]{border-color:var(--vert);color:var(--vert)}
+
+  /* ---- coulisse DK-IR, repliée ---- */
+  .dkir-toggle{
+    font-family:'IBM Plex Mono';font-size:11px;color:var(--gris);
+    cursor:pointer;padding:10px 20px;border-top:1px dashed var(--gris-line);
+    display:flex;align-items:center;gap:8px;
+  }
+  .dkir-toggle:hover{color:var(--blanc)}
+  .dkir-body{
+    display:none;padding:0 20px 16px;
+    font-family:'IBM Plex Mono';font-size:11px;color:var(--gris);
+    white-space:pre-wrap;line-height:1.6;
+  }
+  .dkir-body.open{display:block}
+  .dkir-note{color:var(--jaune);margin-bottom:8px;font-size:10px}
+
+  /* ---- actions ---- */
+  .actions{display:flex;gap:10px;padding:16px 20px;background:var(--noir-3)}
+  button{
+    font-family:'Bebas Neue';font-size:18px;letter-spacing:1.5px;
+    padding:10px 22px;border:none;cursor:pointer;border-radius:0;transition:.15s;
+  }
+  .btn-valid{background:var(--vert);color:var(--noir)}
+  .btn-valid:hover{filter:brightness(1.15)}
+  .btn-reject{background:transparent;color:var(--jaune);border:1px solid var(--jaune)}
+  .btn-reject:hover{background:var(--jaune);color:var(--noir)}
+  .btn-skip{background:transparent;color:var(--gris);border:1px solid var(--gris-line);margin-left:auto}
+  .btn-skip:hover{color:var(--blanc)}
+
+  .empty{text-align:center;padding:80px 20px;color:var(--gris)}
+  .empty .big{font-family:'Bebas Neue';font-size:40px;letter-spacing:2px;color:var(--blanc);margin-bottom:8px}
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--vert);color:var(--noir);font-family:'IBM Plex Mono';
+    font-size:13px;padding:10px 20px;opacity:0;transition:.3s;pointer-events:none;
+  }
+  .toast.show{opacity:1}
+  .toast.reject{background:var(--jaune)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <h1>RedRead</h1>
+      <div class="sub">FILE DE VALIDATION</div>
+    </div>
+  </div>
+  <div class="queue-count"><b id="qn">0</b> analyses à relire</div>
+</header>
+
+<div class="wrap">
+  <div class="hint">
+    Relis l'analyse produite par le moteur. Corrige ce qui est faux ou mal formulé,
+    puis valide pour publication. Ce que tu vois ici est le français clair que liront
+    les utilisateurs. La pensée DK-IR du moteur est repliée en bas, pour audit seulement.
+  </div>
+  <div id="queue"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { SUPABASE_URL, SUPABASE_SERVICE_KEY } from './config.js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+const fmtClass = c => ({capital:'c-capital', petite_bourgeoisie:'c-pb', pb:'c-pb', proletariat:'c-prolo', prolo:'c-prolo'}[c]||'c-pb');
+const FACTS = ['haute','mixte','basse','fausse'];
+
+let queue = [];
+
+async function loadQueue() {
+  const { data, error } = await supabase
+    .from('article_analysis')
+    .select(`
+      article_id,
+      mobile,
+      what_text_says,
+      non_dit,
+      ideological_func,
+      class_reading,
+      factuality,
+      sourcing_note,
+      raw_dkir,
+      articles (
+        title,
+        sources (
+          name,
+          class_default
+        )
+      )
+    `)
+    .is('validated_at', null)
+    .eq('needs_review', false)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error("Erreur de chargement:", error);
+    toast("Erreur de chargement", true);
+    return;
+  }
+
+  queue = (data || []).map(item => ({
+    article_id: item.article_id,
+    source: item.articles?.sources?.name || 'Média inconnu',
+    class: item.articles?.sources?.class_default || 'pb',
+    class_label: item.articles?.sources?.class_default === 'capital' ? 'Capital' : (item.articles?.sources?.class_default === 'proletariat' ? 'Prolétariat' : 'Petite Bourgeoisie'),
+    title: item.articles?.title || 'Sans titre',
+    mobile: item.mobile || '',
+    what_text_says: item.what_text_says || '',
+    nd_absent: Array.isArray(item.non_dit?.absent) ? item.non_dit.absent.join('\n') : (item.non_dit?.absent || ''),
+    nd_cache: Array.isArray(item.non_dit?.cache) ? item.non_dit.cache.join('\n') : (item.non_dit?.cache || ''),
+    nd_demi: Array.isArray(item.non_dit?.demi_devoile) ? item.non_dit.demi_devoile.join('\n') : (item.non_dit?.demi_devoile || ''),
+    class_reading: item.class_reading || '',
+    factuality: item.factuality || 'mixte',
+    sourcing_note: item.sourcing_note || '',
+    raw_dkir: typeof item.raw_dkir === 'object' ? JSON.stringify(item.raw_dkir, null, 2) : (item.raw_dkir || '')
+  }));
+
+  render();
+}
+
+function render(){
+  const q = document.getElementById('queue');
+  document.getElementById('qn').textContent = queue.length;
+  if(queue.length===0){
+    q.innerHTML = '<div class="empty"><div class="big">FILE VIDE</div>'+
+      'Toutes les analyses ont été relues. Le moteur en produira d\'autres au prochain cycle.</div>';
+    return;
+  }
+  q.innerHTML = queue.map((a,i)=>cardHTML(a,i)).join('');
+}
+
+function cardHTML(a,i){
+  return `
+  <div class="card" data-i="${i}">
+    <div class="card-head">
+      <div class="src-line">
+        <span class="src">${a.source}</span>
+        <span class="class-tag ${fmtClass(a.class)}">${a.class_label}</span>
+      </div>
+      <div class="title">${a.title}</div>
+    </div>
+
+    <div class="field">
+      <span class="flabel">Mobile — quel intérêt ce texte protège</span>
+      <textarea class="editable" data-k="mobile">${a.mobile}</textarea>
+    </div>
+    <div class="field">
+      <span class="flabel">Ce que le texte dit</span>
+      <textarea class="editable" data-k="what_text_says">${a.what_text_says}</textarea>
+    </div>
+    <div class="field">
+      <span class="flabel">Le non-dit</span>
+      <div class="nd-group">
+        <div><div class="nd-sub">Absent</div><textarea class="editable" data-k="nd_absent">${a.nd_absent}</textarea></div>
+        <div><div class="nd-sub">Caché</div><textarea class="editable" data-k="nd_cache">${a.nd_cache}</textarea></div>
+        <div><div class="nd-sub">À demi dévoilé</div><textarea class="editable" data-k="nd_demi">${a.nd_demi}</textarea></div>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel">Lecture de classe</span>
+      <textarea class="editable" data-k="class_reading">${a.class_reading}</textarea>
+    </div>
+    <div class="field">
+      <span class="flabel">Fiabilité (indépendante de la classe)</span>
+      <div class="fact-row" data-fact="${i}">
+        ${FACTS.map(f=>`<span class="fact-opt ${f===a.factuality?'on':''}" data-f="${f}">${f}</span>`).join('')}
+      </div>
+      <textarea class="editable" data-k="sourcing_note" style="margin-top:10px">${a.sourcing_note}</textarea>
+    </div>
+
+    <div class="dkir-toggle" data-toggle="${i}">▸ pensée du moteur (DK-IR, audit seulement)</div>
+    <div class="dkir-body" data-dkir="${i}">
+      <div class="dkir-note">Cette notation n'est jamais montrée aux utilisateurs.</div><pre>${a.raw_dkir}</pre>
+    </div>
+
+    <div class="actions">
+      <button class="btn-valid" data-act="valid" data-i="${i}">Valider</button>
+      <button class="btn-reject" data-act="reject" data-i="${i}">À revoir</button>
+      <button class="btn-skip" data-act="skip" data-i="${i}">Passer</button>
+    </div>
+  </div>`;
+}
+
+// ---- interactions ----
+document.addEventListener('click', e=>{
+  const t = e.target;
+  // toggle DK-IR
+  if(t.dataset.toggle!==undefined){
+    const b = document.querySelector(`[data-dkir="${t.dataset.toggle}"]`);
+    b.classList.toggle('open');
+    t.textContent = (b.classList.contains('open')?'▾':'▸')+' pensée du moteur (DK-IR, audit seulement)';
+  }
+  // factualité
+  if(t.classList.contains('fact-opt')){
+    const row = t.closest('.fact-row');
+    row.querySelectorAll('.fact-opt').forEach(o=>o.classList.remove('on'));
+    t.classList.add('on');
+    queue[+row.dataset.fact].factuality = t.dataset.f;
+  }
+  // actions
+  if(t.dataset.act){
+    const i = +t.dataset.i;
+    if(t.dataset.act==='valid'){ collect(i); publish(i); }
+    else if(t.dataset.act==='reject'){ flagReview(i); }
+    else { skip(i); }
+  }
+});
+
+function collect(i){
+  const card = document.querySelector(`.card[data-i="${i}"]`);
+  card.querySelectorAll('.editable').forEach(el=>{
+    queue[i][el.dataset.k] = el.value.trim();
+  });
+}
+
+async function publish(i){
+  const item = queue[i];
+  const non_dit = {
+    absent: item.nd_absent.split('\n').map(x => x.trim()).filter(Boolean),
+    cache: item.nd_cache.split('\n').map(x => x.trim()).filter(Boolean),
+    demi_devoile: item.nd_demi.split('\n').map(x => x.trim()).filter(Boolean)
+  };
+
+  const { error } = await supabase
+    .from('article_analysis')
+    .update({
+      mobile: item.mobile,
+      what_text_says: item.what_text_says,
+      non_dit: non_dit,
+      class_reading: item.class_reading,
+      factuality: item.factuality,
+      sourcing_note: item.sourcing_note,
+      validated_at: new Date().toISOString(),
+      validated_by: '7d6e418b-dfeb-4f0f-80ce-7329dc0aa939' // admin account UID
+    })
+    .eq('article_id', item.article_id);
+
+  if (error) {
+    console.error("Erreur de validation:", error);
+    toast("Erreur de publication", true);
+  } else {
+    toast('Analyse validée et publiée', false);
+    queue.splice(i,1);
+    render();
+  }
+}
+
+async function flagReview(i){
+  const item = queue[i];
+  const note = prompt("Motif du rejet / à revoir :");
+  if (note === null) return; // annulation
+
+  const { error } = await supabase
+    .from('article_analysis')
+    .update({
+      needs_review: true,
+      review_note: note
+    })
+    .eq('article_id', item.article_id);
+
+  if (error) {
+    console.error("Erreur de rejet:", error);
+    toast("Erreur de rejet", true);
+  } else {
+    toast('Marquée à revoir, retirée de la file', true);
+    queue.splice(i,1);
+    render();
+  }
+}
+
+function skip(i){
+  const a = queue.splice(i,1)[0];
+  queue.push(a);
+  render();
+}
+
+function toast(msg, isReject){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isReject?' reject':'');
+  setTimeout(()=>el.className='toast'+(isReject?' reject':''), 1800);
+}
+
+loadQueue();
+</script>
+</body>
+</html>
