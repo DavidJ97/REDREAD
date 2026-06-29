@@ -1,9 +1,9 @@
 name: RedRead Auto-Validate
 
 on:
-  # Se déclenche après le pipeline principal (toutes les heures + 15 min)
+  # Se déclenche 5 min après le pipeline (toutes les 15 min décalé de 5)
   schedule:
-    - cron: '15 * * * *'
+    - cron: '5,20,35,50 * * * *'
   workflow_dispatch:
 
 jobs:

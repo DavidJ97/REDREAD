@@ -133,7 +133,23 @@ async function run() {
   // map domaine -> url RSS
   const feeds = JSON.parse(readFileSync(new URL('./feeds.json', import.meta.url)));
 
-  // charger les sources de la base
+  // ── auto-upsert des sources depuis feeds.json ──────────────────────────
+  // Toute entrée dans feeds.json est créée/mise à jour dans la table sources.
+  // Cela évite de devoir synchroniser manuellement la DB à chaque ajout de flux.
+  const feedDomains = Object.keys(feeds).filter(d => feeds[d]);
+  const sourceRows = feedDomains.map(domain => ({
+    domain,
+    name: domain,                       // nom par défaut = domaine
+    class_default: 'petite_bourgeoisie', // valeur neutre par défaut
+    country: detectCountry(domain),
+  }));
+
+  const { error: upsertErr } = await supabase
+    .from('sources')
+    .upsert(sourceRows, { onConflict: 'domain', ignoreDuplicates: true });
+  if (upsertErr) console.warn('Avertissement upsert sources:', upsertErr.message);
+
+  // charger toutes les sources de la base (dont celles qu'on vient de créer)
   const { data: sources, error } = await supabase
     .from('sources')
     .select('id, name, domain');
@@ -149,14 +165,26 @@ async function run() {
 
   // rapport
   console.log('=== INGESTION REDREAD ===');
-  console.log('Nouveaux articles : ' + stats.inserted);
+  console.log('Sources actives  : ' + sources.filter(s => feeds[s.domain]).length);
+  console.log('Nouveaux articles: ' + stats.inserted);
   console.log('\nPar source :');
   stats.per_source.forEach(s => console.log(`  ${s.source}: ${s.new} nouveaux / ${s.found} trouvés`));
-  if (stats.no_feed.length) console.log('\nSans flux RSS déclaré (à scraper) : ' + stats.no_feed.join(', '));
+  if (stats.no_feed.length) console.log('\nSans flux RSS déclaré : ' + stats.no_feed.join(', '));
   if (stats.failed_feeds.length) {
     console.log('\nFlux en échec :');
     stats.failed_feeds.forEach(f => console.log(`  ${f.source} (${f.url}): ${f.error}`));
   }
 }
 
+// Détection basique du pays à partir du domaine
+function detectCountry(domain) {
+  if (domain.endsWith('.ca') || ['ici.radio-canada.ca','globalnews.ca','lapresse.ca','ledevoir.com','ricochet.media','breachmedia.ca','canadiandimension.com','rabble.ca','thetyee.ca','ipolitics.ca','socialistproject.ca','policyalternatives.ca','passage.media','montrealgazette.com','torontosun.com','ctvnews.ca','nationalpost.com','journaldemontreal.com','lesoleil.com','lenouvelliste.com','lavenir.net','pivot.quebec'].includes(domain)) return 'CA';
+  if (domain.endsWith('.fr') || ['lemonde.fr','liberation.fr','lefigaro.fr','lhumanite.fr','reporterre.net','regards.fr','bastamag.net','acrimed.org','mediapart.fr','contretemps.eu','mondediplomatique.fr','alternatives-economiques.fr','attac.org','franc-tireur.eu','reveil-communiste.com','anticapitaliste.net','lexpansion.lexpress.fr','lesechos.fr','alterinfo.net','mondialisation.ca','michelcollon.info','investigaction.net'].includes(domain)) return 'FR';
+  if (domain.endsWith('.co.uk') || domain.endsWith('.uk')) return 'GB';
+  if (['aljazeera.com','middleeasteye.net'].includes(domain)) return 'INT';
+  if (['africanews.com','allafrica.com'].includes(domain)) return 'AF';
+  return 'US';
+}
+
 run().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+
