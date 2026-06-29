@@ -21,14 +21,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: redread/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Installer les dépendances
-        working-directory: redread
         run: npm ci
 
       - name: Auto-validation des analyses non validées
-        working-directory: redread
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
