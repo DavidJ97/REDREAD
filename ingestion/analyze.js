@@ -21,9 +21,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const CHAT_URL   = process.env.QWEN_CHAT_URL   || 'http://localhost:1234/v1/chat/completions';
 const CHAT_MODEL = process.env.QWEN_CHAT_MODEL || 'qwen2.5-14b-instruct';
 
-const ARTICLES_PER_RUN = 30;
-const EVENTS_PER_RUN   = 15;
-const EVENT_MIN_ARTICLES = 2;   // on n'analyse un cluster qu'à partir de 2 sources
+const ARTICLES_PER_RUN = 100;
+const EVENTS_PER_RUN   = 100;
+const EVENT_MIN_ARTICLES = 1;   // analyser même les clusters à 1 source
 
 // ---------- appel chat Qwen local ----------
 function getMockArticleAnalysis(messages) {
